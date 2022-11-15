@@ -33,6 +33,10 @@ const schemaUser = joi.object({
 // route "/sign-up"
 server.post("/sign-up", async (req, res) => {
     const { name, email, password } = req.body
+    if (!name || !email || !password) {
+        res.status(400).send({ message: "Preencha todos os campos!" })
+        return
+    }
     const cryptedPassword = bcrypt.hashSync(password, 10)
     const validation = schemaUser.validate({ name, email }, { abortEarly: false })
 
@@ -41,7 +45,7 @@ server.post("/sign-up", async (req, res) => {
         res.status(422).send(errorMessage)
         return
     }
-    
+
     try {
         const userExists = await colUsers.findOne({ email })
 
@@ -56,7 +60,7 @@ server.post("/sign-up", async (req, res) => {
             return
         }
     }
-    
+
     catch (err) {
         console.log(err)
     }
