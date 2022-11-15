@@ -22,6 +22,18 @@ const colTransactions = dbMyWallet.collection("transactions")
 const colUsers = dbMyWallet.collection("users")
 const colSessions = dbMyWallet.collection("sessions")
 
+// validation schemas
+const userSchema = joi.object({
+    name: joi.string().required().min(2),
+    email: joi.string().required().email(),
+})
+
+// route "/sign-up"
+server.post("/sign-in", async (req, res) => {
+    const { name, email, password } = req.body
+    
+})
+
 // connection
 server.listen(5000, () => {
     console.log("Connected in port 5000!")
