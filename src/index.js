@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import { MongoClient } from "mongodb"
 import bcrypt from "bcrypt"
 import joi from "joi"
+import { v4 as tokenGenerator } from "uuid"
 
 // configs
 dotenv.config()
@@ -61,6 +62,25 @@ server.post("/sign-up", async (req, res) => {
         }
     }
 
+    catch (err) {
+        console.log(err)
+    }
+})
+
+// route "/sign-in"
+server.post("/sign-in", async (req, res) => {
+    const { email, password } = req.body
+    const token = tokenGenerator()
+    try {
+        const user = await colUsers.findOne({ email })
+        if (user && bcrypt.compareSync(password, user.password)) {
+            await colSessions.insertOne({ token, userId: user._id })
+            res.status(200).send({ token, name: user.name })
+        }
+        else {
+            res.status(401).send({ message: "Usuário ou senha incorretos!" })
+        }
+    }
     catch (err) {
         console.log(err)
     }
