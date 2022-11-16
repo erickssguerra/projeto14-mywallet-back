@@ -1,7 +1,7 @@
 import express, { json } from "express"
 import cors from "cors"
 import dotenv from "dotenv"
-import { MongoClient } from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 import bcrypt from "bcrypt"
 import joi from "joi"
 import { v4 as tokenGenerator } from "uuid"
@@ -97,13 +97,13 @@ server.post("/sign-in", async (req, res) => {
 server.post("/transactions", async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", "")
-    
+
     if (!token) {
         res.status(401).send({ message: "Você não está mais logado." })
         return
     }
     const { price, description, type, day } = req.body
-    
+
     if (!price || !description) {
         res.status(404).send({ message: "Preencha todos os campos!" })
     }
@@ -118,7 +118,7 @@ server.post("/transactions", async (req, res) => {
     try {
         const activeSession = await colSessions.findOne({ token })
         if (!activeSession) {
-            res.status(401).send({ message: "Você não está mais logado." })
+            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
             return
         }
         const activeUser = await colUsers.findOne({ _id: activeSession.userId })
@@ -127,7 +127,7 @@ server.post("/transactions", async (req, res) => {
             return
         }
         await colTransactions.insertOne({ price, description, type, day, email: activeUser.email })
-        res.status(200).send({ message: "Transação cadastrada com sucesso!"})
+        res.status(200).send({ message: "Transação cadastrada com sucesso!" })
     }
     catch (err) {
         console.log(err)
@@ -146,7 +146,7 @@ server.get("/transactions", async (req, res) => {
     try {
         const activeSession = await colSessions.findOne({ token })
         if (!activeSession) {
-            res.status(401).send({ message: "Você não está mais logado." })
+            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
             return
         }
         const activeUser = await colUsers.findOne({ _id: activeSession.userId })
@@ -162,6 +162,31 @@ server.get("/transactions", async (req, res) => {
         console.log(err)
         res.sendStatus(500)
     }
+})
+
+server.delete("/transactions/:id", async (req, res) => {
+    const { authorization } = req.headers
+    const token = authorization?.replace("Bearer ", "")
+    const { id } = req.params
+   
+    if (!token) {
+        res.status(401).send({ message: "Você não está mais logado." })
+        return
+    }
+    try {
+        const activeSession = await colSessions.findOne({ token })
+        if (!activeSession) {
+            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
+            return
+        }
+        await colTransactions.deleteOne({ _id: ObjectId(id) })
+        res.status(200).send({ message: "Transação apagada com sucesso!" })
+
+    } catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    }
+
 })
 
 // connection
