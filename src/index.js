@@ -97,8 +97,13 @@ server.post("/sign-in", async (req, res) => {
 server.post("/transactions", async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", "")
+    
+    if (!token) {
+        res.status(401).send({ message: "Você não está mais logado." })
+        return
+    }
     const { price, description, type, day } = req.body
-
+    
     if (!price || !description) {
         res.status(404).send({ message: "Preencha todos os campos!" })
     }
@@ -110,10 +115,6 @@ server.post("/transactions", async (req, res) => {
         return
     }
 
-    if (!token) {
-        res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
     try {
         const activeSession = await colSessions.findOne({ token })
         if (!activeSession) {
@@ -126,7 +127,7 @@ server.post("/transactions", async (req, res) => {
             return
         }
         await colTransactions.insertOne({ price, description, type, day, email: activeUser.email })
-        res.status(200).send({ message: "Item cadastrado com sucesso!", token })
+        res.status(200).send({ message: "Transação cadastrada com sucesso!"})
     }
     catch (err) {
         console.log(err)
