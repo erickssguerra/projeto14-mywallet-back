@@ -96,7 +96,9 @@ server.post("/sign-in", async (req, res) => {
 // routes "/transaction"
 server.post("/transactions", async (req, res) => {
     const { authorization } = req.headers
+    const token = authorization?.replace("Bearer ", "")
     const { price, description, type, day } = req.body
+
     if (!price || !description) {
         res.status(404).send({ message: "Preencha todos os campos!" })
     }
@@ -108,7 +110,6 @@ server.post("/transactions", async (req, res) => {
         return
     }
 
-    const token = authorization?.replace("Bearer ", "")
     if (!token) {
         res.status(401).send({ message: "Você não está mais logado." })
         return
@@ -128,6 +129,35 @@ server.post("/transactions", async (req, res) => {
         res.status(200).send({ message: "Item cadastrado com sucesso!", token })
     }
     catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
+server.get("/transactions", async (req, res) => {
+    const { authorization } = req.headers
+    const token = authorization?.replace("Bearer ", "")
+
+    if (!token) {
+        res.status(401).send({ message: "Você não está mais logado." })
+        return
+    }
+    try {
+        const activeSession = await colSessions.findOne({ token })
+        if (!activeSession) {
+            res.status(401).send({ message: "Você não está mais logado." })
+            return
+        }
+        const activeUser = await colUsers.findOne({ _id: activeSession.userId })
+        if (!activeUser) {
+            res.status(401).send({ message: "Você não está mais cadastrado." })
+            return
+        }
+        const transactions = await colTransactions.find({ email: activeUser.email }).toArray()
+        res.status(200).send(transactions)
+
+
+    } catch (err) {
         console.log(err)
         res.sendStatus(500)
     }
