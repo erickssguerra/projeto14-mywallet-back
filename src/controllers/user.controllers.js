@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt"
+import schemaUser from "../schemas/user.schema.js"
 import { colUsers } from "../database/collections.js"
 
 export async function postSignUp(req, res) {

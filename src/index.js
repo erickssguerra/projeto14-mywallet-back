@@ -20,17 +20,9 @@ server.use(json())
 
 
 // validation schemas
-const schemaUser = joi.object({
-    name: joi.string().required().min(2),
-    email: joi.string().required().email()
-})
 
-const schemaTransaction = joi.object({
-    price: joi.number().required(),
-    description: joi.string().required(),
-    type: joi.string().valid("deposit", "withdraw").required(),
-    day: joi.string().length(5).required()
-})
+
+
 
 // route "/sign-up"
 server.post("/sign-up", postSignUp)
