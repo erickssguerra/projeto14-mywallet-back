@@ -4,12 +4,9 @@ import { colUsers } from "../database/collections.js"
 
 export async function postSignUp(req, res) {
     const { name, email, password } = req.body
-    if (!name || !email || !password) {
-        res.status(400).send({ message: "Preencha todos os campos!" })
-        return
-    }
+
     const cryptedPassword = bcrypt.hashSync(password, 10)
-    const validation = schemaUser.validate({ name, email }, { abortEarly: false })
+    const validation = schemaUser.validate({ name, email, password }, { abortEarly: false })
 
     if (validation.error) {
         const errorMessage = validation.error.details.map((detail) => detail.message)
