@@ -1,29 +1,23 @@
 import express, { json } from "express"
 import cors from "cors"
-import dotenv from "dotenv"
+
 import { MongoClient, ObjectId } from "mongodb"
 import bcrypt from "bcrypt"
 import joi from "joi"
 import { v4 as tokenGenerator } from "uuid"
+import { postSignUp } from "./controllers/user.controllers.js"
+import { postSignIn } from "./controllers/auth.controllers.js"
+import { postTransactions, getTransactions, deleteTransaction } from "./controllers/transactions.controllers.js"
 
 // configs
-dotenv.config()
-const mongoClient = new MongoClient(process.env.MONGO_URI)
-try {
-    await mongoClient.connect()
-    console.log("MongoDB connected!")
-} catch (err) {
-    console.log(err)
-}
-const dbMyWallet = mongoClient.db("myWallet")
+
+
 const server = express()
 server.use(cors())
 server.use(json())
 
 // collections
-const colTransactions = dbMyWallet.collection("transactions")
-const colUsers = dbMyWallet.collection("users")
-const colSessions = dbMyWallet.collection("sessions")
+
 
 // validation schemas
 const schemaUser = joi.object({
@@ -39,155 +33,17 @@ const schemaTransaction = joi.object({
 })
 
 // route "/sign-up"
-server.post("/sign-up", async (req, res) => {
-    const { name, email, password } = req.body
-    if (!name || !email || !password) {
-        res.status(400).send({ message: "Preencha todos os campos!" })
-        return
-    }
-    const cryptedPassword = bcrypt.hashSync(password, 10)
-    const validation = schemaUser.validate({ name, email }, { abortEarly: false })
-
-    if (validation.error) {
-        const errorMessage = validation.error.details.map((detail) => detail.message)
-        res.status(422).send(errorMessage)
-        return
-    }
-
-    try {
-        const userExists = await colUsers.findOne({ email })
-
-        if (!userExists) {
-            await colUsers.insertOne({ name, email, password: cryptedPassword })
-            res.status(201).send({ message: "Usuário cadastrado com sucesso!" })
-            return
-        }
-
-        else {
-            res.status(401).send({ message: "E-mail já cadastrado." })
-            return
-        }
-    }
-
-    catch (err) {
-        console.log(err)
-    }
-})
+server.post("/sign-up", postSignUp)
 
 // route "/sign-in"
-server.post("/sign-in", async (req, res) => {
-    const { email, password } = req.body
-    const token = tokenGenerator()
-    try {
-        const user = await colUsers.findOne({ email })
-        if (user && bcrypt.compareSync(password, user.password)) {
-            await colSessions.insertOne({ token, userId: user._id })
-            res.status(200).send({ token, name: user.name })
-        }
-        else {
-            res.status(401).send({ message: "Usuário ou senha incorretos!" })
-        }
-    }
-    catch (err) {
-        console.log(err)
-    }
-})
+server.post("/sign-in", postSignIn)
 
 // routes "/transaction"
-server.post("/transactions", async (req, res) => {
-    const { authorization } = req.headers
-    const token = authorization?.replace("Bearer ", "")
+server.post("/transactions", postTransactions)
 
-    if (!token) {
-        res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
-    const { price, description, type, day } = req.body
+server.get("/transactions", getTransactions)
 
-    if (!price || !description) {
-        res.status(404).send({ message: "Preencha todos os campos!" })
-    }
-
-    const validation = schemaTransaction.validate({ price, description, type, day }, { abortEarly: false })
-    if (validation.error) {
-        const errorMessage = validation.error.details.map(detail => detail.message)
-        res.status(401).send(errorMessage)
-        return
-    }
-
-    try {
-        const activeSession = await colSessions.findOne({ token })
-        if (!activeSession) {
-            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
-            return
-        }
-        const activeUser = await colUsers.findOne({ _id: activeSession.userId })
-        if (!activeUser) {
-            res.status(401).send({ message: "Você não está mais cadastrado." })
-            return
-        }
-        await colTransactions.insertOne({ price, description, type, day, email: activeUser.email })
-        res.status(200).send({ message: "Transação cadastrada com sucesso!" })
-    }
-    catch (err) {
-        console.log(err)
-        res.sendStatus(500)
-    }
-})
-
-server.get("/transactions", async (req, res) => {
-    const { authorization } = req.headers
-    const token = authorization?.replace("Bearer ", "")
-
-    if (!token) {
-        res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
-    try {
-        const activeSession = await colSessions.findOne({ token })
-        if (!activeSession) {
-            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
-            return
-        }
-        const activeUser = await colUsers.findOne({ _id: activeSession.userId })
-        if (!activeUser) {
-            res.status(401).send({ message: "Você não está mais cadastrado." })
-            return
-        }
-        const transactions = await colTransactions.find({ email: activeUser.email }).toArray()
-        res.status(200).send(transactions)
-
-
-    } catch (err) {
-        console.log(err)
-        res.sendStatus(500)
-    }
-})
-
-server.delete("/transactions/:id", async (req, res) => {
-    const { authorization } = req.headers
-    const token = authorization?.replace("Bearer ", "")
-    const { id } = req.params
-   
-    if (!token) {
-        res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
-    try {
-        const activeSession = await colSessions.findOne({ token })
-        if (!activeSession) {
-            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
-            return
-        }
-        await colTransactions.deleteOne({ _id: ObjectId(id) })
-        res.status(200).send({ message: "Transação apagada com sucesso!" })
-
-    } catch (err) {
-        console.log(err)
-        res.sendStatus(500)
-    }
-
-})
+server.delete("/transactions/:id", deleteTransaction)
 
 // connection
 server.listen(5000, () => {
