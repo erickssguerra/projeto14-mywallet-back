@@ -1,3 +1,5 @@
+import schemaTransaction from "../schemas/transaction.schema.js"
+import { ObjectId } from "mongodb"
 import { colSessions, colUsers, colTransactions } from "../database/collections.js"
 
 export async function postTransactions(req, res) {
@@ -8,10 +10,6 @@ export async function postTransactions(req, res) {
     if (!token) {
         res.status(401).send({ message: "Você não está mais logado." })
         return
-    }
-
-    if (!price || !description) {
-        res.status(404).send({ message: "Preencha todos os campos!" })
     }
 
     const validation = schemaTransaction.validate({ price, description, type, day }, { abortEarly: false })
@@ -75,19 +73,27 @@ export async function deleteTransaction(req, res) {
     const token = authorization?.replace("Bearer ", "")
     const { id } = req.params
 
-    if (!token) {
-        res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
     try {
         const activeSession = await colSessions.findOne({ token })
         if (!activeSession) {
             res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
             return
         }
-        await colTransactions.deleteOne({ _id: ObjectId(id) })
-        res.status(200).send({ message: "Transação apagada com sucesso!" })
-        return
+        const transaction = await colTransactions.findOne({ _id: ObjectId(id) })
+        if (!transaction) {
+            res.status(401).send({ message: "Transação não encontrada." })
+            return
+        }
+        const requiringUser = await colUsers.findOne({ email: transaction.email })
+        if (activeSession.userId.toString() === requiringUser._id.toString()) {
+            await colTransactions.deleteOne({ _id: ObjectId(id) })
+            res.status(200).send({ message: "Transação apagada com sucesso!" })
+            return
+        }
+        else {
+            res.status(401).send({message: "Você não tem permissão para apagar essa mensagem."})
+            return
+        }
     }
     catch (err) {
         console.log(err)
