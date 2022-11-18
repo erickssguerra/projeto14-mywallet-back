@@ -22,7 +22,7 @@ export async function postTransactions(req, res) {
     try {
         const activeSession = await colSessions.findOne({ token })
         if (!activeSession) {
-            res.status(401).send({ message: "Sua sessão expirou. Faça login novamente." })
+            res.status(400).send({ message: "Sua sessão expirou. Faça login novamente." })
             return
         }
         const activeUser = await colUsers.findOne({ _id: activeSession.userId })
