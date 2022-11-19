@@ -13,12 +13,12 @@ export async function transactionAuthorization(req, res, next) {
             res.status(400).send({ message: "Sua sessão expirou. Faça login novamente." })
             return
         }
-        const activeUser = await colUsers.findOne({ _id: activeSession.userId })
-        if (!activeUser) {
+        const authorizedUser = await colUsers.findOne({ _id: activeSession.userId })
+        if (!authorizedUser) {
             res.status(401).send({ message: "Você não está mais cadastrado." })
             return
         }
-        req.activeUser = activeUser
+        req.authorizedUser = authorizedUser
     }
     catch (err) {
         console.log(err)
