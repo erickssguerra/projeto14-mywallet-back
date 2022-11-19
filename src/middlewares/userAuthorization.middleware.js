@@ -1,6 +1,6 @@
 import { colSessions, colUsers } from "../database/collections.js"
 
-export async function transactionAuthorization(req, res, next) {
+export async function userAuthorization(req, res, next) {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", "")
     if (!token) {

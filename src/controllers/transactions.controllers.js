@@ -27,23 +27,11 @@ export async function getTransactions(req, res) {
 }
 
 export async function deleteTransaction(req, res) {
-    const { id } = req.params
-    const authorizedUser = req.authorizedUser
+    const id = req.authorizedId
     try {
-        const transaction = await colTransactions.findOne({ _id: ObjectId(id) })
-        if (!transaction) {
-            res.status(401).send({ message: "Transação não encontrada." })
-            return
-        }
-        if (transaction.email === authorizedUser.email) {
-            await colTransactions.deleteOne({ _id: ObjectId(id) })
-            res.status(200).send({ message: "Transação apagada com sucesso!" })
-            return
-        }
-        else {
-            res.status(401).send({ message: "Você não tem permissão para apagar essa mensagem." })
-            return
-        }
+        await colTransactions.deleteOne({ _id: ObjectId(id) })
+        res.status(200).send({ message: "Transação apagada com sucesso!" })
+        return
     }
     catch (err) {
         console.log(err)
