@@ -5,7 +5,7 @@ import { colSessions, colUsers, colTransactions } from "../database/collections.
 export async function postTransactions(req, res) {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", "")
-    const { price, description, type, day } = req.body
+    const { price, description, type, day } = req.validatedTransaction
 
     if (!token) {
         res.status(401).send({ message: "Você não está mais logado." })

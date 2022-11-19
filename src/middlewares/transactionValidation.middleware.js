@@ -8,5 +8,6 @@ export function transactionValidation(req, res, next) {
         res.status(400).send(errorMessage)
         return
     }
+    req.validatedTransaction = { price, description, type, day }
     next()
 }
