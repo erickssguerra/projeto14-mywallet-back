@@ -1,4 +1,4 @@
-import schemaTransaction from "../schemas/transaction.schema.js"
+// import schemaTransaction from "../schemas/transaction.schema.js"
 import { ObjectId } from "mongodb"
 import { colSessions, colUsers, colTransactions } from "../database/collections.js"
 
@@ -9,13 +9,6 @@ export async function postTransactions(req, res) {
 
     if (!token) {
         res.status(401).send({ message: "Você não está mais logado." })
-        return
-    }
-
-    const validation = schemaTransaction.validate({ price, description, type, day }, { abortEarly: false })
-    if (validation.error) {
-        const errorMessage = validation.error.details.map(detail => detail.message)
-        res.status(400).send(errorMessage)
         return
     }
 
@@ -44,7 +37,7 @@ export async function getTransactions(req, res) {
     const token = authorization?.replace("Bearer ", "")
 
     if (!token) {
-        res.status(400).send({ message: "Problema na requisição: Authorization Bearer Token" })
+        res.status(400).send({ message: "Problema na requisição: Authorization is missing" })
         return
     }
     try {
@@ -91,7 +84,7 @@ export async function deleteTransaction(req, res) {
             return
         }
         else {
-            res.status(401).send({message: "Você não tem permissão para apagar essa mensagem."})
+            res.status(401).send({ message: "Você não tem permissão para apagar essa mensagem." })
             return
         }
     }
