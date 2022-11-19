@@ -2,7 +2,7 @@ import { v4 as tokenGenerator } from "uuid"
 import { colSessions } from "../database/collections.js"
 
 export async function postSignIn(req, res) {
-    const user = res.locals.validatedUser
+    const user = req.validatedUser
     const token = tokenGenerator()
     try {
         const previousSession = await colSessions.findOne({ userId: user._id })

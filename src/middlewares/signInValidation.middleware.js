@@ -13,7 +13,7 @@ export async function signInValidation(req, res, next) {
             res.status(401).send({ message: "Senha incorreta!" })
             return
         }
-        res.locals.validatedUser = user
+        req.validatedUser = user
     }
     catch (err) {
         console.log(err)
