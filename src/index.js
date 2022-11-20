@@ -10,5 +10,3 @@ server.use(router)
 server.listen(5000, () => {
     console.log("Connected in port 5000!")
 })
-
-
