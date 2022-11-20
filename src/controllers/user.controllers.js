@@ -2,7 +2,7 @@ import bcrypt from "bcrypt"
 import { colUsers } from "../database/collections.js"
 
 export async function postSignUp(req, res) {
-    const { name, email, password } = req.user
+    const { name, email, password } = req.validatedForm
     const cryptedPassword = bcrypt.hashSync(password, 10)
     try {
         const userExists = await colUsers.findOne({ email })
