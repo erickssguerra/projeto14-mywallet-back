@@ -7,6 +7,7 @@ server.use(cors())
 server.use(json())
 server.use(router)
 
-server.listen(5000, () => {
-    console.log("Connected in port 5000!")
+const port = process.env.PORT || 5000
+server.listen(port, () => {
+    console.log(`Server running in port ${port}.`)
 })
