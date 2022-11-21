@@ -1,17 +1,36 @@
-# MyWallet app API
+# MyWallet project Details
 
-
-Route "/sign-in" object format
+## API address
 ----------------------------------------------
-{
-    email: "...",
-    password: "..."
-}
-
-Route "/sign-up" object format
+https://mywallet-api-srvi.onrender.com/
+## Routes
 ----------------------------------------------
-{
+###  "/sign-up" object format
+req.body: `{
     name" "...",
     email: "...",
     password: "..."
-}
+}`
+
+###  "/sign-in" object format
+req.body: `{
+    email: "...",
+    password: "..."
+}`
+res: `{
+    token,
+    name
+}`
+###  "/transaction" object format
+req.headers: 
+`{ 
+    authorization: Bearer token 
+}`
+req.body:
+`{
+    email: "...",
+    type: "...",
+    price: "...",
+    description: "...",
+    day: "..." 
+}`
